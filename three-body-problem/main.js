@@ -196,13 +196,17 @@ function updateCamera() {
     const cameraDistance = Math.abs((maxDim / 2) / Math.tan(fov / 2));
     
     const padding = 1.5;
-    const targetZ = center.z + Math.max(5, cameraDistance * padding);
+    // Calculate camera position for a 45-degree angle from above
+    const angle = Math.PI / 4; // 45 degrees in radians
+    const cameraOffset = Math.max(5, cameraDistance * padding); // Ensure a minimum distance
+    const targetY = center.y + cameraOffset * Math.sin(angle);
+    const targetZ = center.z + cameraOffset * Math.cos(angle);
 
     // Smoothly move the look-at target
     camera.target.lerp(center, 0.05);
 
     // Smoothly move the camera position
-    const targetPosition = new THREE.Vector3(camera.target.x, camera.target.y, targetZ);
+    const targetPosition = new THREE.Vector3(center.x, targetY, targetZ);
     camera.position.lerp(targetPosition, 0.05);
 
     // Always look at the interpolated target
