@@ -5,19 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solar System Model</title>
     <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js",
+                "three/examples/jsm/controls/OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
 </head>
 <body>
     <div id="title">太陽系モデル</div>
     <div id="controls">
-        <h2>カメラコントロール</h2>
-        <span>ズーム (Z軸)</span>
-        <input type="range" id="zoomSlider" min="1000" max="50000" value="5000">
-        <span>左右移動 (X軸)</span>
-        <input type="range" id="xSlider" min="-10000" max="10000" value="0">
-        <span>上下移動 (Y軸)</span>
-        <input type="range" id="ySlider" min="-10000" max="10000" value="0">
+        <h2>コントロール</h2>
         <span>時間スケール</span>
         <input type="range" id="timeScaleSlider" min="0.01" max="26" value="0.1" step="0.01">
+        <div id="info-panel"></div>
     </div>
     <canvas id="solarSystemCanvas"></canvas>
     <div id="labels"></div>
