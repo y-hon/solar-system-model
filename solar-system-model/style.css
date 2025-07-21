@@ -96,7 +96,7 @@ canvas {
     position: absolute;
     color: white;
     font-family: Arial, sans-serif;
-    font-size: 4em; /* Increased font size significantly */
+    font-size: 1.5em; /* Adjusted for better readability */
     text-align: center;
     pointer-events: none; /* Allow clicks to pass through to canvas */
     transform: translate(-50%, -50%); /* Center the label */
@@ -112,5 +112,5 @@ canvas {
 .pluto-label-always-visible {
     opacity: 1; /* Always visible */
     color: #FFD700; /* Gold color for Pluto */
-    font-size: 2em; /* Smaller for Pluto to reduce clutter */
+    font-size: 1em; /* Smaller for Pluto to reduce clutter */
 }
