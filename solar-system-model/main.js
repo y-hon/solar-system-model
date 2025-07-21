@@ -37,14 +37,14 @@ let TIME_SCALE = 0.101458333;
 
 // Planets data
 const planetsData = [
-    { name: 'Mercury', japaneseName: '水星', radiusEarth: 0.38, auDistance: 0.39, orbitalPeriodDays: 88, inclinationDegrees: 7.0, eccentricity: 0.205, color: 0x808080 },
-    { name: 'Venus', japaneseName: '金星', radiusEarth: 0.95, auDistance: 0.72, orbitalPeriodDays: 225, inclinationDegrees: 3.4, eccentricity: 0.007, color: 0xFFA500 },
-    { name: 'Earth', japaneseName: '地球', radiusEarth: 1.0, auDistance: 1.0, orbitalPeriodDays: 365.25, inclinationDegrees: 0.0, eccentricity: 0.017, color: 0x0000FF },
-    { name: 'Mars', japaneseName: '火星', radiusEarth: 0.53, auDistance: 1.52, orbitalPeriodDays: 687, inclinationDegrees: 1.85, eccentricity: 0.093, color: 0xFF0000 },
-    { name: 'Jupiter', japaneseName: '木星', radiusEarth: 11.2, auDistance: 5.2, orbitalPeriodDays: 4333, inclinationDegrees: 1.3, eccentricity: 0.048, color: 0xA52A2A },
-    { name: 'Saturn', japaneseName: '土星', radiusEarth: 9.45, auDistance: 9.58, orbitalPeriodDays: 10759, inclinationDegrees: 2.5, eccentricity: 0.054, color: 0xB8860B },
-    { name: 'Uranus', japaneseName: '天王星', radiusEarth: 4.0, auDistance: 19.2, orbitalPeriodDays: 30687, inclinationDegrees: 0.77, eccentricity: 0.047, color: 0xADD8E6 },
-    { name: 'Neptune', japaneseName: '海王星', radiusEarth: 3.88, auDistance: 30.1, orbitalPeriodDays: 60190, inclinationDegrees: 1.77, eccentricity: 0.009, color: 0x00008B },
+    { name: 'Mercury', japaneseName: '水星', radiusEarth: 0.38, auDistance: 0.39, orbitalPeriodDays: 88, inclinationDegrees: 7.0, eccentricity: 0.205, textureUrl: './textures/2k_mercury.jpg' },
+    { name: 'Venus', japaneseName: '金星', radiusEarth: 0.95, auDistance: 0.72, orbitalPeriodDays: 225, inclinationDegrees: 3.4, eccentricity: 0.007, textureUrl: './textures/2k_venus_surface.jpg' },
+    { name: 'Earth', japaneseName: '地球', radiusEarth: 1.0, auDistance: 1.0, orbitalPeriodDays: 365.25, inclinationDegrees: 0.0, eccentricity: 0.017, textureUrl: './textures/2k_earth_daymap.jpg' },
+    { name: 'Mars', japaneseName: '火星', radiusEarth: 0.53, auDistance: 1.52, orbitalPeriodDays: 687, inclinationDegrees: 1.85, eccentricity: 0.093, textureUrl: './textures/2k_mars.jpg' },
+    { name: 'Jupiter', japaneseName: '木星', radiusEarth: 11.2, auDistance: 5.2, orbitalPeriodDays: 4333, inclinationDegrees: 1.3, eccentricity: 0.048, textureUrl: './textures/2k_jupiter.jpg' },
+    { name: 'Saturn', japaneseName: '土星', radiusEarth: 9.45, auDistance: 9.58, orbitalPeriodDays: 10759, inclinationDegrees: 2.5, eccentricity: 0.054, textureUrl: './textures/2k_saturn.jpg' },
+    { name: 'Uranus', japaneseName: '天王星', radiusEarth: 4.0, auDistance: 19.2, orbitalPeriodDays: 30687, inclinationDegrees: 0.77, eccentricity: 0.047, textureUrl: './textures/2k_uranus.jpg' },
+    { name: 'Neptune', japaneseName: '海王星', radiusEarth: 3.88, auDistance: 30.1, orbitalPeriodDays: 60190, inclinationDegrees: 1.77, eccentricity: 0.009, textureUrl: './textures/2k_neptune.jpg' },
     { name: 'Pluto', japaneseName: '冥王星', radiusEarth: 0.18, auDistance: 39.5, orbitalPeriodDays: 90560, inclinationDegrees: 17.1, eccentricity: 0.248, color: 0xD3D3D3 }
 ];
 
@@ -58,7 +58,9 @@ planetsData.forEach(data => {
 // Sun
 const sunRadius = EARTH_RADIUS_SCALE * 3;
 const sunGeometry = new THREE.SphereGeometry(sunRadius, 32, 32);
-const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 1 });
+const textureLoader = new THREE.TextureLoader();
+const sunTexture = textureLoader.load('./textures/2k_sun.jpg');
+const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture, emissive: 0xffff00, emissiveMap: sunTexture, emissiveIntensity: 1.2 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
@@ -68,7 +70,7 @@ const planetLabels = {};
 
 planetsData.forEach(data => {
     const geometry = new THREE.SphereGeometry(data.scaledRadius, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color: data.color, emissive: data.color, emissiveIntensity: 0.5 });
+    const material = new THREE.MeshStandardMaterial({ map: textureLoader.load(data.textureUrl) });
     const planet = new THREE.Mesh(geometry, material);
     planet.userData = { ...data, angle: Math.random() * Math.PI * 2 }; // Store all data and add random angle
     scene.add(planet);
@@ -76,6 +78,9 @@ planetsData.forEach(data => {
 
     const labelDiv = document.createElement('div');
     labelDiv.className = 'planet-label';
+    if (data.name === 'Pluto') {
+        labelDiv.classList.add('pluto-label-always-visible');
+    }
     labelDiv.innerHTML = `${data.name}<br>(${data.japaneseName})`;
     document.getElementById('labels').appendChild(labelDiv);
     planetLabels[data.name] = labelDiv;
@@ -138,7 +143,7 @@ function handleMouseMove(event) {
 
     if (hoveredPlanet && (!intersects.length || hoveredPlanet !== intersects[0].object)) {
         const oldLabel = planetLabels[hoveredPlanet.userData.name];
-        if (oldLabel && !oldLabel.classList.contains('focused')) {
+        if (oldLabel && !oldLabel.classList.contains('focused') && !oldLabel.classList.contains('pluto-label-always-visible')) {
             oldLabel.classList.remove('visible');
         }
         hoveredPlanet = null;
@@ -147,7 +152,7 @@ function handleMouseMove(event) {
     if (intersects.length > 0 && hoveredPlanet !== intersects[0].object) {
         hoveredPlanet = intersects[0].object;
         const newLabel = planetLabels[hoveredPlanet.userData.name];
-        if (newLabel) {
+        if (newLabel && !newLabel.classList.contains('pluto-label-always-visible')) {
             newLabel.classList.add('visible');
         }
     }
@@ -163,7 +168,7 @@ function handleClick(event) {
 
     if (focusedPlanet) {
         const oldLabel = planetLabels[focusedPlanet.userData.name];
-        if (oldLabel) oldLabel.classList.remove('focused', 'visible');
+        if (oldLabel && !oldLabel.classList.contains('pluto-label-always-visible')) oldLabel.classList.remove('focused', 'visible');
     }
 
     if (intersects.length > 0) {

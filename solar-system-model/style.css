@@ -108,3 +108,9 @@ canvas {
 .planet-label.visible {
     opacity: 1;
 }
+
+.pluto-label-always-visible {
+    opacity: 1; /* Always visible */
+    color: #FFD700; /* Gold color for Pluto */
+    font-size: 2em; /* Smaller for Pluto to reduce clutter */
+}
