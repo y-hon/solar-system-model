@@ -70,7 +70,13 @@ const planetLabels = {};
 
 planetsData.forEach(data => {
     const geometry = new THREE.SphereGeometry(data.scaledRadius, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ map: textureLoader.load(data.textureUrl) });
+    const materialOptions = {};
+    if (data.textureUrl) {
+        materialOptions.map = textureLoader.load(data.textureUrl);
+    } else if (data.color) {
+        materialOptions.color = data.color;
+    }
+    const material = new THREE.MeshStandardMaterial(materialOptions);
     const planet = new THREE.Mesh(geometry, material);
     planet.userData = { ...data, angle: Math.random() * Math.PI * 2 }; // Store all data and add random angle
     scene.add(planet);
@@ -110,6 +116,47 @@ timeScaleSlider.addEventListener('input', (event) => {
         planet.userData.speed = (2 * Math.PI / planetsData[index].orbitalPeriodDays) * TIME_SCALE;
     });
 });
+
+const planetButtonsContainer = document.getElementById('planet-buttons');
+
+function setFocus(planetToFocus) {
+    if (focusedPlanet) {
+        const oldLabel = planetLabels[focusedPlanet.userData.name];
+        if (oldLabel && !oldLabel.classList.contains('pluto-label-always-visible')) {
+            oldLabel.classList.remove('focused', 'visible');
+        }
+    }
+
+    focusedPlanet = planetToFocus;
+
+    if (focusedPlanet) {
+        const newLabel = planetLabels[focusedPlanet.userData.name];
+        if (newLabel) {
+            newLabel.classList.add('visible', 'focused');
+        }
+        updateInfoPanel(focusedPlanet.userData);
+    } else {
+        clearInfoPanel();
+    }
+}
+
+
+planetsData.forEach((data, index) => {
+    const button = document.createElement('button');
+    button.textContent = data.japaneseName;
+    button.addEventListener('click', () => {
+        setFocus(planets[index]);
+    });
+    planetButtonsContainer.appendChild(button);
+});
+
+const sunButton = document.createElement('button');
+sunButton.textContent = '太陽';
+sunButton.addEventListener('click', () => {
+    setFocus(null);
+});
+planetButtonsContainer.appendChild(sunButton);
+
 
 let focusedPlanet = null;
 let hoveredPlanet = null;
@@ -159,6 +206,11 @@ function handleMouseMove(event) {
 }
 
 function handleClick(event) {
+    // Ignore clicks on the controls panel
+    if (event.clientX > window.innerWidth - controlsWidth) {
+        return;
+    }
+
     const canvasBounds = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - canvasBounds.left) / (window.innerWidth - controlsWidth)) * 2 - 1;
     mouse.y = -((event.clientY - canvasBounds.top) / window.innerHeight) * 2 + 1;
@@ -166,19 +218,10 @@ function handleClick(event) {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(planets);
 
-    if (focusedPlanet) {
-        const oldLabel = planetLabels[focusedPlanet.userData.name];
-        if (oldLabel && !oldLabel.classList.contains('pluto-label-always-visible')) oldLabel.classList.remove('focused', 'visible');
-    }
-
     if (intersects.length > 0) {
-        focusedPlanet = intersects[0].object;
-        const newLabel = planetLabels[focusedPlanet.userData.name];
-        if (newLabel) newLabel.classList.add('visible', 'focused');
-        updateInfoPanel(focusedPlanet.userData);
+        setFocus(intersects[0].object);
     } else {
-        focusedPlanet = null;
-        clearInfoPanel();
+        setFocus(null);
     }
 }
 
