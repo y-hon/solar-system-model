@@ -1,35 +1,41 @@
 body {
     margin: 0;
-    overflow: hidden;
+    font-family: Arial, sans-serif;
+    overflow: hidden; /* Prevent scrollbars */
+}
+
+#app-container {
+    display: flex;
+    height: 100vh; /* Full viewport height */
+}
+
+#solarSystemCanvas {
+    flex-grow: 1; /* Take up all available space */
+    display: block; /* Remove default inline spacing */
+    background-color: black;
 }
 
 #title {
     position: absolute;
     top: 20px;
-    width: 100%;
-    text-align: center;
+    left: 50%;
+    transform: translateX(-50%);
     color: white;
-    font-family: Arial, sans-serif;
     font-size: 3em;
-    z-index: 10; /* Ensure it's above the canvas */
+    z-index: 10;
 }
 
 #controls {
-    position: fixed; /* Fixed position relative to viewport */
-    right: 0;
-    top: 0;
-    height: 100vh; /* Full height */
-    width: 250px; /* Fixed width for controls */
-    background-color: rgb(0, 0, 0); /* Fully opaque black background */
-    z-index: 100; /* Ensure it's above the canvas */
-    display: flex;
-    flex-direction: column;
-    /* justify-content: center; */ /* Removed to allow top alignment */
-    align-items: center;
+    width: 250px;
+    flex-shrink: 0; /* Prevent shrinking */
+    background-color: rgb(0, 0, 0);
+    color: white;
     padding: 20px;
     box-sizing: border-box;
-    color: white; /* Text color for labels */
-    font-family: Arial, sans-serif;
+    overflow-y: auto; /* Add scroll if content overflows */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #controls h2 {
@@ -39,26 +45,14 @@ body {
 }
 
 #controls span {
-    margin-top: 20px; /* Increased top margin for labels */
+    margin-top: 20px;
     margin-bottom: 5px;
     font-size: 1.1em;
 }
 
 #controls input[type="range"] {
     width: 90%;
-    margin: 5px 0; /* Reduced margin for sliders */
-    -webkit-appearance: none;
-    height: 8px;
-    background: #d3d3d3;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
-    border-radius: 5px;
-}
-
-#controls input[type="range"]:hover {
-    opacity: 1;
+    margin: 5px 0;
 }
 
 #planet-buttons {
@@ -83,19 +77,33 @@ body {
     background-color: #555;
 }
 
+#tourButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#tourButton:hover {
+    background-color: #0056b3;
+}
+
 #info-panel {
     margin-top: 30px;
     padding: 15px;
     width: 90%;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    color: white;
-    font-family: Arial, sans-serif;
 }
 
 #info-panel h3 {
     margin-top: 0;
-    color: #FFA500; /* A highlight color */
+    color: #FFA500;
 }
 
 #info-panel p {
@@ -103,26 +111,15 @@ body {
     font-size: 0.9em;
 }
 
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: calc(100vw - 250px); /* Canvas takes remaining width */
-    height: 100vh;
-    display: block;
-    background-color: black;
-    z-index: 1;
-}
-
 .planet-label {
     position: absolute;
     color: white;
     font-family: Arial, sans-serif;
-    font-size: 1.5em; /* Adjusted for better readability */
+    font-size: 1.5em;
     text-align: center;
-    pointer-events: none; /* Allow clicks to pass through to canvas */
-    transform: translate(-50%, -50%); /* Center the label */
-    z-index: 5; /* Below controls, above canvas */
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 5;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 }
@@ -132,7 +129,13 @@ canvas {
 }
 
 .pluto-label-always-visible {
-    opacity: 1; /* Always visible */
-    color: #FFD700; /* Gold color for Pluto */
-    font-size: 1em; /* Smaller for Pluto to reduce clutter */
+    opacity: 1;
+    color: #FFD700;
+    font-size: 1em;
+}
+
+.planet-label.focused {
+    opacity: 1;
+    color: #FFD700;
+    font-weight: bold;
 }

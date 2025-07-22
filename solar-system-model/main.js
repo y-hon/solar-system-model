@@ -3,11 +3,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-const controlsWidth = 250; // Must match CSS width
-renderer.setSize(window.innerWidth - controlsWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const canvas = document.querySelector('#solarSystemCanvas');
+const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
+const controlsWidth = 250; // Re-introduced
+
+const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 50000);
+renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
 
 // OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -228,6 +229,36 @@ sunButton.addEventListener('click', () => {
 });
 planetButtonsContainer.appendChild(sunButton);
 
+// Tour
+let tourActive = false;
+let tourIndex = -1;
+let tourTimeout;
+const tourStops = [null, ...planets]; // null for Sun
+let tourState = 'idle'; // 'idle', 'moving', 'waiting'
+
+const tourButton = document.getElementById('tourButton');
+tourButton.addEventListener('click', () => {
+    tourActive = !tourActive;
+    if (tourActive) {
+        tourButton.textContent = 'ツアー停止';
+        controls.enabled = false;
+        tourIndex = -1; // Reset to sun
+        advanceTour();
+    } else {
+        tourButton.textContent = 'ツアー開始';
+        controls.enabled = true;
+        tourState = 'idle';
+        clearTimeout(tourTimeout);
+    }
+});
+
+function advanceTour() {
+    tourIndex = (tourIndex + 1) % tourStops.length;
+    const target = tourStops[tourIndex];
+    setFocus(target);
+    tourState = 'moving';
+}
+
 let focusedPlanet = null;
 let hoveredPlanet = null;
 const raycaster = new THREE.Raycaster();
@@ -251,9 +282,9 @@ function clearInfoPanel() {
 }
 
 function handleMouseMove(event) {
-    const canvasBounds = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((event.clientX - canvasBounds.left) / (window.innerWidth - controlsWidth)) * 2 - 1;
-    mouse.y = -((event.clientY - canvasBounds.top) / window.innerHeight) * 2 + 1;
+    const canvasBounds = canvas.getBoundingClientRect();
+    mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
+    mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(planets);
@@ -276,14 +307,15 @@ function handleMouseMove(event) {
 }
 
 function handleClick(event) {
-    // Ignore clicks on the controls panel
-    if (event.clientX > window.innerWidth - controlsWidth) {
-        return;
+    // Check if the click is inside the canvas
+    const canvasBounds = canvas.getBoundingClientRect();
+    if (event.clientX < canvasBounds.left || event.clientX > canvasBounds.right ||
+        event.clientY < canvasBounds.top || event.clientY > canvasBounds.bottom) {
+        return; // Click was outside the canvas
     }
 
-    const canvasBounds = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((event.clientX - canvasBounds.left) / (window.innerWidth - controlsWidth)) * 2 - 1;
-    mouse.y = -((event.clientY - canvasBounds.top) / window.innerHeight) * 2 + 1;
+    mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
+    mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(planets);
@@ -325,27 +357,67 @@ function animate() {
         });
     });
 
-    if (focusedPlanet) {
-        const targetPosition = new THREE.Vector3();
-        focusedPlanet.getWorldPosition(targetPosition);
-        controls.target.lerp(targetPosition, 0.1);
+    if (tourActive) {
+        let targetPosition;
+        let desiredPosition;
+
+        if (focusedPlanet) {
+            targetPosition = new THREE.Vector3();
+            focusedPlanet.getWorldPosition(targetPosition);
+            const distance = focusedPlanet.userData.scaledRadius * 4;
+            const offset = new THREE.Vector3(0, distance * 0.5, distance);
+            desiredPosition = targetPosition.clone().add(offset);
+        } else {
+            targetPosition = new THREE.Vector3(0, 0, 0);
+            desiredPosition = new THREE.Vector3(0, 2000, 12000);
+        }
+
+        if (tourState === 'moving') {
+            camera.position.lerp(desiredPosition, 0.05);
+            controls.target.lerp(targetPosition, 0.05);
+
+            if (camera.position.distanceTo(desiredPosition) < 100) {
+                tourState = 'waiting';
+                tourTimeout = setTimeout(advanceTour, 5000);
+            }
+        } else if (tourState === 'waiting') {
+            // Lock camera to the desired position relative to the moving planet
+            camera.position.copy(desiredPosition);
+            controls.target.copy(targetPosition);
+        }
+
     } else {
-        controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.1);
+        if (focusedPlanet) {
+            const targetPosition = new THREE.Vector3();
+            focusedPlanet.getWorldPosition(targetPosition);
+            controls.target.lerp(targetPosition, 0.1);
+        } else {
+            controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.1);
+        }
     }
 
     controls.update();
     renderer.render(scene, camera);
 
+    // Update labels
+    const canvasRect = canvas.getBoundingClientRect();
     planets.forEach(planet => {
         const vector = new THREE.Vector3();
         planet.getWorldPosition(vector);
         vector.project(camera);
-        const x = (vector.x * 0.5 + 0.5) * (window.innerWidth - controlsWidth);
-        const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+
+        const x = (vector.x * 0.5 + 0.5) * canvas.clientWidth;
+        const y = (-vector.y * 0.5 + 0.5) * canvas.clientHeight;
+
         const label = planetLabels[planet.userData.name];
         if (label) {
-            label.style.left = `${x}px`;
-            label.style.top = `${y + 50}px`;
+            if (vector.z > 1) {
+                label.style.display = 'none';
+            } else {
+                label.style.display = 'block';
+                label.style.left = `${canvasRect.left + x}px`;
+                label.style.top = `${canvasRect.top + y}px`;
+            }
         }
     });
 }
@@ -353,8 +425,13 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
-    const controlsWidth = 250;
-    camera.aspect = (window.innerWidth - controlsWidth) / window.innerHeight;
+    // We need to get the new size of the canvas from the layout
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth - controlsWidth, window.innerHeight);
+
+    // Important: false as the third argument to prevent Three.js from setting the canvas style.
+    renderer.setSize(width, height, false);
 });
