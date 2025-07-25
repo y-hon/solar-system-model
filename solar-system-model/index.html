@@ -20,7 +20,10 @@
         <div id="controls">
             <h2>コントロール</h2>
             <span>時間スケール</span>
-            <input type="range" id="timeScaleSlider" min="0.01" max="26" value="0.1" step="0.01">
+            <div class="slider-container">
+                <input type="range" id="timeScaleSlider" min="0" max="1000" value="0" step="1">
+                <span id="earth-marker-label">🌍1分</span>
+            </div>
             <div id="planet-buttons"></div>
             <button id="tourButton">ツアー開始</button>
             <div id="info-panel"></div>

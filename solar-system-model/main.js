@@ -1,83 +1,101 @@
+// main.js - Corrected and Reordered
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+// 1. SCENE SETUP
 const scene = new THREE.Scene();
-
 const canvas = document.querySelector('#solarSystemCanvas');
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
-const controlsWidth = 250; // Re-introduced
-
 const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 50000);
 renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
 
-// OrbitControls
+// 2. CONTROLS & CAMERA POSITION
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.minDistance = 100;
-controls.maxDistance = 40000; // Adjusted max distance
-camera.position.set(0, 2000, 12000); // Initial camera position
+controls.maxDistance = 40000;
+camera.position.set(0, 2000, 12000);
 controls.update();
 
-// Add ambient light
+// 3. LIGHTS
 const ambientLight = new THREE.AmbientLight(0x666666);
 scene.add(ambientLight);
-
-// Add point light for the sun
 const pointLight = new THREE.PointLight(0xffffff, 5, 0);
 scene.add(pointLight);
 
-// Constants for scaling
+// 4. CONSTANTS & SCALE SETTINGS
 const AU_SCALE = 1000;
 const EARTH_RADIUS_SCALE = 20;
-let TIME_SCALE = 0.101458333;
-
-// Planets data
-const planetsData = [
-    { name: 'Mercury', japaneseName: '水星', radiusEarth: 0.38, auDistance: 0.39, orbitalPeriodDays: 88, inclinationDegrees: 7.0, eccentricity: 0.205, axialTilt: 0.03, rotationPeriodHours: 1407.6, textureUrl: './textures/2k_mercury.jpg' },
-    { name: 'Venus', japaneseName: '金星', radiusEarth: 0.95, auDistance: 0.72, orbitalPeriodDays: 225, inclinationDegrees: 3.4, eccentricity: 0.007, axialTilt: 177.4, rotationPeriodHours: -5832.5, textureUrl: './textures/2k_venus_surface.jpg' },
-    { name: 'Earth', japaneseName: '地球', radiusEarth: 1.0, auDistance: 1.0, orbitalPeriodDays: 365.25, inclinationDegrees: 0.0, eccentricity: 0.017, axialTilt: 23.44, rotationPeriodHours: 23.93, textureUrl: './textures/2k_earth_daymap.jpg', moons: [
-        { name: 'Moon', radius: 1737, distance: 384400, orbitalPeriodDays: 27.3, textureUrl: null, color: 0x888888 }
-    ]},
-    { name: 'Mars', japaneseName: '火星', radiusEarth: 0.53, auDistance: 1.52, orbitalPeriodDays: 687, inclinationDegrees: 1.85, eccentricity: 0.093, axialTilt: 25.19, rotationPeriodHours: 24.62, textureUrl: './textures/2k_mars.jpg' },
-    { name: 'Jupiter', japaneseName: '木星', radiusEarth: 11.2, auDistance: 5.2, orbitalPeriodDays: 4333, inclinationDegrees: 1.3, eccentricity: 0.048, axialTilt: 3.13, rotationPeriodHours: 9.93, textureUrl: './textures/2k_jupiter.jpg', moons: [
-        { name: 'Io', radius: 1821, distance: 421700, orbitalPeriodDays: 1.77, color: 0xf9d71c },
-        { name: 'Europa', radius: 1560, distance: 671034, orbitalPeriodDays: 3.55, color: 0xa9a9a9 },
-        { name: 'Ganymede', radius: 2634, distance: 1070412, orbitalPeriodDays: 7.15, color: 0x8b4513 },
-        { name: 'Callisto', radius: 2410, distance: 1882709, orbitalPeriodDays: 16.69, color: 0x4a4a4a },
-    ]},
-    { name: 'Saturn', japaneseName: '土星', radiusEarth: 9.45, auDistance: 9.58, orbitalPeriodDays: 10759, inclinationDegrees: 2.5, eccentricity: 0.054, axialTilt: 26.73, rotationPeriodHours: 10.66, textureUrl: './textures/2k_saturn.jpg', rings: { innerRadius: 74500, outerRadius: 140180, textureUrl: null } },
-    { name: 'Uranus', japaneseName: '天王星', radiusEarth: 4.0, auDistance: 19.2, orbitalPeriodDays: 30687, inclinationDegrees: 0.77, eccentricity: 0.047, axialTilt: 97.77, rotationPeriodHours: -17.24, textureUrl: './textures/2k_uranus.jpg' },
-    { name: 'Neptune', japaneseName: '海王星', radiusEarth: 3.88, auDistance: 30.1, orbitalPeriodDays: 60190, inclinationDegrees: 1.77, eccentricity: 0.009, axialTilt: 28.32, rotationPeriodHours: 16.11, textureUrl: './textures/2k_neptune.jpg' },
-    { name: 'Pluto', japaneseName: '冥王星', radiusEarth: 0.18, auDistance: 39.5, orbitalPeriodDays: 90560, inclinationDegrees: 17.1, eccentricity: 0.248, axialTilt: 119.6, rotationPeriodHours: -153.3, color: 0xD3D3D3 }
-];
-
-planetsData.forEach(data => {
-    data.scaledRadius = data.radiusEarth * EARTH_RADIUS_SCALE;
-    data.scaledDistance = data.auDistance * AU_SCALE;
-    data.speed = (2 * Math.PI / data.orbitalPeriodDays) * TIME_SCALE;
-    data.inclinationRadians = THREE.MathUtils.degToRad(data.inclinationDegrees);
-    data.axialTiltRadians = THREE.MathUtils.degToRad(data.axialTilt);
-    data.rotationSpeed = (2 * Math.PI / (data.rotationPeriodHours / 24)) * TIME_SCALE;
-});
-
-// Sun
-const sunRadius = EARTH_RADIUS_SCALE * 3;
-const sunGeometry = new THREE.SphereGeometry(sunRadius, 32, 32);
-const textureLoader = new THREE.TextureLoader();
-const sunTexture = textureLoader.load('./textures/2k_sun.jpg');
-const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture, emissive: 0xffff00, emissiveMap: sunTexture, emissiveIntensity: 1.2 });
-const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-scene.add(sun);
-
-// Planets, Moons, and Rings
-const planets = [];
-const planetLabels = {};
 const EARTH_RADIUS_KM = 6371;
 const RADIUS_KM_TO_SCENE_SCALE = EARTH_RADIUS_SCALE / EARTH_RADIUS_KM;
 
+// Logarithmic time scale settings
+const MIN_LOG_TIME_SCALE = -2; // Represents 10^-2 = 0.01
+const MAX_LOG_TIME_SCALE = 4;  // Represents 10^4 = 10000
+let TIME_SCALE; // Will be initialized at the end
+
+// 5. DATA DEFINITIONS
+const sunData = {
+    name: 'Sun',
+    japaneseName: '太陽',
+    description: '太陽系の中心に位置する恒星。地球の約109倍の直径を持ち、その質量は太陽系全体の99.8%以上を占める。核融合反応により、光と熱を放出している。',
+    radiusEarth: 109,
+    isSun: true,
+    axialTilt: 7.25,
+    rotationPeriodHours: 609.12
+};
+
+const planetsData = [
+    { name: 'Mercury', japaneseName: '水星', radiusEarth: 0.38, auDistance: 0.39, orbitalPeriodDays: 88, inclinationDegrees: 7.0, eccentricity: 0.205, axialTilt: 0.03, rotationPeriodHours: 1407.6, textureUrl: './textures/2k_mercury.jpg', description: '太陽に最も近い惑星。大気がほとんどなく、昼夜の寒暖差が非常に激しい。' },
+    { name: 'Venus', japaneseName: '金星', radiusEarth: 0.95, auDistance: 0.72, orbitalPeriodDays: 225, inclinationDegrees: 3.4, eccentricity: 0.007, axialTilt: 177.4, rotationPeriodHours: -5832.5, textureUrl: './textures/2k_venus_surface.jpg', description: '厚い二酸化炭素の雲に覆われた灼熱の惑星。自転が非常に遅く、他の惑星とは逆向きに自転している。' },
+    { name: 'Earth', japaneseName: '地球', radiusEarth: 1.0, auDistance: 1.0, orbitalPeriodDays: 365.25, inclinationDegrees: 0.0, eccentricity: 0.017, axialTilt: 23.44, rotationPeriodHours: 23.93, textureUrl: './textures/2k_earth_daymap.jpg', moons: [{ name: 'Moon', radius: 1737, distance: 384400, orbitalPeriodDays: 27.3, textureUrl: null, color: 0x888888 }], description: '私たちが住む、生命あふれる水の惑星。適度な大気と磁場が生命を育んでいる。'},
+    { name: 'Mars', japaneseName: '火星', radiusEarth: 0.53, auDistance: 1.52, orbitalPeriodDays: 687, inclinationDegrees: 1.85, eccentricity: 0.093, axialTilt: 25.19, rotationPeriodHours: 24.62, textureUrl: './textures/2k_mars.jpg', description: '「赤い惑星」として知られる。かつては水が存在した痕跡があり、生命の可能性が探られている。' },
+    { name: 'Jupiter', japaneseName: '木星', radiusEarth: 11.2, auDistance: 5.2, orbitalPeriodDays: 4333, inclinationDegrees: 1.3, eccentricity: 0.048, axialTilt: 3.13, rotationPeriodHours: 9.93, textureUrl: './textures/2k_jupiter.jpg', moons: [{ name: 'Io', radius: 1821, distance: 421700, orbitalPeriodDays: 1.77, color: 0xf9d71c }, { name: 'Europa', radius: 1560, distance: 671034, orbitalPeriodDays: 3.55, color: 0xa9a9a9 }, { name: 'Ganymede', radius: 2634, distance: 1070412, orbitalPeriodDays: 7.15, color: 0x8b4513 }, { name: 'Callisto', radius: 2410, distance: 1882709, orbitalPeriodDays: 16.69, color: 0x4a4a4a }], description: '太陽系最大の惑星。巨大なガス惑星で、特徴的な大赤斑は巨大な嵐。'},
+    { name: 'Saturn', japaneseName: '土星', radiusEarth: 9.45, auDistance: 9.58, orbitalPeriodDays: 10759, inclinationDegrees: 2.5, eccentricity: 0.054, axialTilt: 26.73, rotationPeriodHours: 10.66, textureUrl: './textures/2k_saturn.jpg', rings: { innerRadius: 74500, outerRadius: 140180, textureUrl: null }, description: '美しい環を持つことで有名。環は主に氷の粒子からできている。' },
+    { name: 'Uranus', japaneseName: '天王星', radiusEarth: 4.0, auDistance: 19.2, orbitalPeriodDays: 30687, inclinationDegrees: 0.77, eccentricity: 0.047, axialTilt: 97.77, rotationPeriodHours: -17.24, textureUrl: './textures/2k_uranus.jpg', description: '横倒しになって自転する、氷の惑星。メタンの大気により青く見える。' },
+    { name: 'Neptune', japaneseName: '海王星', radiusEarth: 3.88, auDistance: 30.1, orbitalPeriodDays: 60190, inclinationDegrees: 1.77, eccentricity: 0.009, axialTilt: 28.32, rotationPeriodHours: 16.11, textureUrl: './textures/2k_neptune.jpg', description: '太陽系で最も外側にある惑星。太陽系で最も速い風が吹いている。' },
+    { name: 'Pluto', japaneseName: '冥王星', radiusEarth: 0.18, auDistance: 39.5, orbitalPeriodDays: 90560, inclinationDegrees: 17.1, eccentricity: 0.248, axialTilt: 119.6, rotationPeriodHours: -153.3, color: 0xD3D3D3, description: '2006年に準惑星に分類された天体。窒素の氷で覆われている。' }
+];
+
+// 6. OBJECT CREATION
+const textureLoader = new THREE.TextureLoader();
+
+// Sun
+const sunRadius = EARTH_RADIUS_SCALE * 3;
+sunData.scaledRadius = sunRadius; // Add scaledRadius to sunData
+const sunGeometry = new THREE.SphereGeometry(sunRadius, 32, 32);
+const sunTexture = textureLoader.load('./textures/2k_sun.jpg');
+const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture, emissive: 0xffff00, emissiveMap: sunTexture, emissiveIntensity: 1.2 });
+const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+sun.userData = sunData;
+sun.rotation.x = THREE.MathUtils.degToRad(sunData.axialTilt);
+scene.add(sun);
+const sunAxisGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -sunRadius * 1.5, 0), new THREE.Vector3(0, sunRadius * 1.5, 0)]);
+const sunAxisMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+const sunAxis = new THREE.Line(sunAxisGeometry, sunAxisMaterial);
+sun.add(sunAxis);
+
+// Planets, Moons, Rings, and Labels
+const planets = [];
+const planetLabels = {};
+
+// Add Sun's label first
+const sunLabelDiv = document.createElement('div');
+sunLabelDiv.className = 'planet-label';
+sunLabelDiv.innerHTML = `${sunData.name}<br>(${sunData.japaneseName})`;
+document.getElementById('labels').appendChild(sunLabelDiv);
+planetLabels[sunData.name] = sunLabelDiv;
+
 planetsData.forEach(data => {
+    // Pre-calculate scaled values
+    data.scaledRadius = data.radiusEarth * EARTH_RADIUS_SCALE;
+    data.scaledDistance = data.auDistance * AU_SCALE;
+    data.inclinationRadians = THREE.MathUtils.degToRad(data.inclinationDegrees);
+    data.axialTiltRadians = THREE.MathUtils.degToRad(data.axialTilt);
+
     const planetGroup = new THREE.Group();
     scene.add(planetGroup);
 
@@ -93,24 +111,18 @@ planetsData.forEach(data => {
     planet.rotation.x = data.axialTiltRadians;
     planetGroup.add(planet);
 
+    const axisGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -data.scaledRadius * 1.5, 0), new THREE.Vector3(0, data.scaledRadius * 1.5, 0)]);
+    const axisMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+    const axis = new THREE.Line(axisGeometry, axisMaterial);
+    planet.add(axis);
+
     planet.userData = { ...data, angle: Math.random() * Math.PI * 2, isPlanet: true };
     planets.push(planet);
 
     if (data.rings) {
-        const ringGeometry = new THREE.RingGeometry(
-            data.rings.innerRadius * RADIUS_KM_TO_SCENE_SCALE,
-            data.rings.outerRadius * RADIUS_KM_TO_SCENE_SCALE,
-            64
-        );
-        const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0xaaaaaa,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.6
-        });
+        const ringGeometry = new THREE.RingGeometry(data.rings.innerRadius * RADIUS_KM_TO_SCENE_SCALE, data.rings.outerRadius * RADIUS_KM_TO_SCENE_SCALE, 64);
+        const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-        // The ring is a child of the planet, so it will inherit the planet's axial tilt.
-        // We just need to rotate it to lie flat on the planet's equatorial plane.
         ring.rotation.x = Math.PI / 2;
         planet.add(ring);
     }
@@ -118,12 +130,12 @@ planetsData.forEach(data => {
     if (data.moons) {
         data.moons.forEach(moonData => {
             const moonScaledRadius = moonData.radius * RADIUS_KM_TO_SCENE_SCALE;
-            const moonScaledDistance = moonData.distance / 10000; // Using a smaller scale for moon orbits for better visualization
+            const moonScaledDistance = moonData.distance / 10000;
             const moonGeometry = new THREE.SphereGeometry(moonScaledRadius, 16, 16);
             const moonMaterial = new THREE.MeshStandardMaterial({ color: moonData.color });
             const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-            moon.userData = { ...moonData, angle: Math.random() * Math.PI * 2, speed: (2 * Math.PI / moonData.orbitalPeriodDays) * TIME_SCALE, scaledDistance: moonScaledDistance };
-            planet.add(moon); // Add moon to the planet
+            moon.userData = { ...moonData, angle: Math.random() * Math.PI * 2, scaledDistance: moonScaledDistance };
+            planet.add(moon);
         });
     }
 
@@ -156,12 +168,7 @@ planetsData.forEach(data => {
 
 // Asteroid Belt
 const asteroidCount = 1500;
-const asteroidBelt = new THREE.InstancedMesh(
-    new THREE.DodecahedronGeometry(1, 0),
-    new THREE.MeshStandardMaterial({ color: 0x888888 }),
-    asteroidCount
-);
-
+const asteroidBelt = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: 0x888888 }), asteroidCount);
 const dummy = new THREE.Object3D();
 for (let i = 0; i < asteroidCount; i++) {
     const angle = Math.random() * Math.PI * 2;
@@ -174,34 +181,43 @@ for (let i = 0; i < asteroidCount; i++) {
 }
 scene.add(asteroidBelt);
 
-const timeScaleSlider = document.getElementById('timeScaleSlider');
-timeScaleSlider.addEventListener('input', (event) => {
-    TIME_SCALE = parseFloat(event.target.value);
-    planets.forEach((planet, index) => {
-        planet.userData.speed = (2 * Math.PI / planetsData[index].orbitalPeriodDays) * TIME_SCALE;
-        planet.userData.rotationSpeed = (2 * Math.PI / (planetsData[index].rotationPeriodHours / 24)) * TIME_SCALE;
-        if (planet.children) {
-            planet.children.forEach(child => {
-                if (child.userData.speed) { // Moons
-                    child.userData.speed = (2 * Math.PI / child.userData.orbitalPeriodDays) * TIME_SCALE;
-                }
-            });
-        }
-    });
-});
+// 7. UI & EVENT HANDLERS
+// State variables
+let focusedPlanet = null;
+let hoveredPlanet = null;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
+// DOM Elements
+const infoPanel = document.getElementById('info-panel');
 const planetButtonsContainer = document.getElementById('planet-buttons');
+const tourButton = document.getElementById('tourButton');
+const timeScaleSlider = document.getElementById('timeScaleSlider');
+const earthMarkerLabel = document.getElementById('earth-marker-label');
 
-function setFocus(planetToFocus) {
+// UI Update Functions
+function updateInfoPanel(data) {
+    if (data.isSun) {
+        infoPanel.innerHTML = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> 恒星</p><p><strong>直径 (地球比):</strong> ${data.radiusEarth.toLocaleString()}</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
+    } else {
+        const rotationDirection = data.rotationPeriodHours > 0 ? '順行' : '逆行';
+        const rotationDays = Math.abs(data.rotationPeriodHours / 24).toFixed(2);
+        infoPanel.innerHTML = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> ${data.name === 'Pluto' ? '準惑星' : '惑星'}</p><p><strong>太陽からの平均距離:</strong> ${data.auDistance} AU</p><p><strong>公転周期:</strong> ${data.orbitalPeriodDays.toLocaleString()} 日</p><p><strong>自転周期:</strong> ${rotationDays} 日 (${rotationDirection})</p><p><strong>地軸の傾き:</strong> ${data.axialTilt}°</p><p><strong>半径 (地球比):</strong> ${data.radiusEarth}</p><p><strong>軌道離心率:</strong> ${data.eccentricity}</p><p><strong>軌道傾斜角:</strong> ${data.inclinationDegrees}°</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
+    }
+}
+
+function clearInfoPanel() {
+    infoPanel.innerHTML = '';
+}
+
+function setFocus(celestialObject) {
     if (focusedPlanet) {
         const oldLabel = planetLabels[focusedPlanet.userData.name];
         if (oldLabel && !oldLabel.classList.contains('pluto-label-always-visible')) {
             oldLabel.classList.remove('focused', 'visible');
         }
     }
-
-    focusedPlanet = planetToFocus;
-
+    focusedPlanet = celestialObject;
     if (focusedPlanet) {
         const newLabel = planetLabels[focusedPlanet.userData.name];
         if (newLabel) {
@@ -213,85 +229,56 @@ function setFocus(planetToFocus) {
     }
 }
 
+// Button Creation
+const sunButton = document.createElement('button');
+sunButton.textContent = '太陽';
+sunButton.addEventListener('click', () => setFocus(sun));
+planetButtonsContainer.appendChild(sunButton);
+
 planetsData.forEach((data, index) => {
     const button = document.createElement('button');
     button.textContent = data.japaneseName;
-    button.addEventListener('click', () => {
-        setFocus(planets[index]);
-    });
+    button.addEventListener('click', () => setFocus(planets[index]));
     planetButtonsContainer.appendChild(button);
 });
 
-const sunButton = document.createElement('button');
-sunButton.textContent = '太陽';
-sunButton.addEventListener('click', () => {
-    setFocus(null);
-});
-planetButtonsContainer.appendChild(sunButton);
-
-// Tour
+// Tour Logic
 let tourActive = false;
-let tourIndex = -1;
+let tourIndex = 0;
 let tourTimeout;
-const tourStops = [null, ...planets]; // null for Sun
-let tourState = 'idle'; // 'idle', 'moving', 'waiting'
+const tourStops = [sun, ...planets];
+let tourState = 'idle';
 
-const tourButton = document.getElementById('tourButton');
+function advanceTour() {
+    tourIndex = (tourIndex + 1) % tourStops.length;
+    setFocus(tourStops[tourIndex]);
+    tourState = 'moving';
+}
+
 tourButton.addEventListener('click', () => {
     tourActive = !tourActive;
     if (tourActive) {
         tourButton.textContent = 'ツアー停止';
         controls.enabled = false;
-        // Skip the sun and go directly to the first planet (Mercury)
-        tourIndex = 1; // Mercury is at index 1 of tourStops
-        const target = tourStops[tourIndex];
-        setFocus(target);
+        tourIndex = 0;
+        setFocus(tourStops[tourIndex]);
         tourState = 'moving';
     } else {
         tourButton.textContent = 'ツアー開始';
         controls.enabled = true;
         tourState = 'idle';
         clearTimeout(tourTimeout);
+        setFocus(null);
     }
 });
 
-function advanceTour() {
-    tourIndex = (tourIndex + 1) % tourStops.length;
-    const target = tourStops[tourIndex];
-    setFocus(target);
-    tourState = 'moving';
-}
-
-let focusedPlanet = null;
-let hoveredPlanet = null;
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-const infoPanel = document.getElementById('info-panel');
-
-function updateInfoPanel(data) {
-    infoPanel.innerHTML = `
-        <h3>${data.name} (${data.japaneseName})</h3>
-        <p><strong>分類:</strong> ${data.name === 'Pluto' ? '準惑星' : '惑星'}</p>
-        <p><strong>太陽からの平均距離:</strong> ${data.auDistance} AU</p>
-        <p><strong>公転周期:</strong> ${data.orbitalPeriodDays} 日</p>
-        <p><strong>半径 (地球比):</strong> ${data.radiusEarth}</p>
-        <p><strong>軌道離心率:</strong> ${data.eccentricity}</p>
-        <p><strong>軌道傾斜角:</strong> ${data.inclinationDegrees}°</p>
-    `;
-}
-
-function clearInfoPanel() {
-    infoPanel.innerHTML = '';
-}
-
+// Mouse Event Handlers
 function handleMouseMove(event) {
     const canvasBounds = canvas.getBoundingClientRect();
     mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
     mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(planets);
-
+    const intersects = raycaster.intersectObjects([sun, ...planets]);
     if (hoveredPlanet && (!intersects.length || hoveredPlanet !== intersects[0].object)) {
         const oldLabel = planetLabels[hoveredPlanet.userData.name];
         if (oldLabel && !oldLabel.classList.contains('focused') && !oldLabel.classList.contains('pluto-label-always-visible')) {
@@ -299,7 +286,6 @@ function handleMouseMove(event) {
         }
         hoveredPlanet = null;
     }
-
     if (intersects.length > 0 && hoveredPlanet !== intersects[0].object) {
         hoveredPlanet = intersects[0].object;
         const newLabel = planetLabels[hoveredPlanet.userData.name];
@@ -310,19 +296,12 @@ function handleMouseMove(event) {
 }
 
 function handleClick(event) {
-    // Check if the click is inside the canvas
     const canvasBounds = canvas.getBoundingClientRect();
-    if (event.clientX < canvasBounds.left || event.clientX > canvasBounds.right ||
-        event.clientY < canvasBounds.top || event.clientY > canvasBounds.bottom) {
-        return; // Click was outside the canvas
-    }
-
+    if (event.clientX < canvasBounds.left || event.clientX > canvasBounds.right || event.clientY < canvasBounds.top || event.clientY > canvasBounds.bottom) return;
     mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
     mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(planets);
-
+    const intersects = raycaster.intersectObjects([sun, ...planets]);
     if (intersects.length > 0) {
         setFocus(intersects[0].object);
     } else {
@@ -332,15 +311,26 @@ function handleClick(event) {
 
 window.addEventListener('mousemove', handleMouseMove);
 window.addEventListener('click', handleClick);
+window.addEventListener('resize', () => {
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height, false);
+});
 
+// 8. ANIMATION LOOP
 function animate() {
     requestAnimationFrame(animate);
 
+    // Rotations
+    sun.rotation.y += sun.userData.rotationSpeed;
     planets.forEach(planet => {
-        // Planet Rotation
         planet.rotation.y += planet.userData.rotationSpeed;
+    });
 
-        // Planet Orbit
+    // Orbits
+    planets.forEach(planet => {
         const planetGroup = planet.parent;
         planet.userData.angle += planet.userData.speed;
         const r = planet.userData.scaledDistance * (1 - planet.userData.eccentricity * planet.userData.eccentricity) / (1 + planet.userData.eccentricity * Math.cos(planet.userData.angle));
@@ -350,50 +340,39 @@ function animate() {
         planetGroup.position.y = -z_ecliptic * Math.sin(planet.userData.inclinationRadians);
         planetGroup.position.z = z_ecliptic * Math.cos(planet.userData.inclinationRadians);
 
-        // Moon Orbit
         planet.children.forEach(child => {
-            if (child.userData.speed) { // Moons
-                child.userData.angle += child.userData.speed;
-                child.position.x = Math.cos(child.userData.angle) * child.userData.scaledDistance;
-                child.position.z = Math.sin(child.userData.angle) * child.userData.scaledDistance;
-            }
+            if (child.userData.isPlanet || !child.userData.orbitalPeriodDays) return;
+            child.userData.angle += child.userData.speed;
+            child.position.x = Math.cos(child.userData.angle) * child.userData.scaledDistance;
+            child.position.z = Math.sin(child.userData.angle) * child.userData.scaledDistance;
         });
     });
 
+    // Camera Control
     if (tourActive) {
-        let targetPosition;
-        let desiredPosition;
-
-        if (focusedPlanet) {
-            targetPosition = new THREE.Vector3();
-            focusedPlanet.getWorldPosition(targetPosition);
-            const distance = focusedPlanet.userData.scaledRadius * 4;
-            const offset = new THREE.Vector3(0, distance * 0.5, distance);
-            desiredPosition = targetPosition.clone().add(offset);
-        } else {
-            targetPosition = new THREE.Vector3(0, 0, 0);
-            desiredPosition = new THREE.Vector3(0, 2000, 12000);
-        }
-
-        if (tourState === 'moving') {
-            camera.position.lerp(desiredPosition, 0.05);
-            controls.target.lerp(targetPosition, 0.05);
-
-            if (camera.position.distanceTo(desiredPosition) < 100) {
-                tourState = 'waiting';
-                tourTimeout = setTimeout(advanceTour, 5000);
-            }
-        } else if (tourState === 'waiting') {
-            // Lock camera to the desired position relative to the moving planet
-            camera.position.copy(desiredPosition);
-            controls.target.copy(targetPosition);
-        }
-
-    } else {
         if (focusedPlanet) {
             const targetPosition = new THREE.Vector3();
             focusedPlanet.getWorldPosition(targetPosition);
-            controls.target.lerp(targetPosition, 0.1);
+            const distance = focusedPlanet.userData.scaledRadius * 4;
+            const offset = new THREE.Vector3(0, distance * 0.5, distance);
+            const desiredPosition = targetPosition.clone().add(offset);
+
+            if (tourState === 'moving') {
+                camera.position.lerp(desiredPosition, 0.05);
+                controls.target.lerp(targetPosition, 0.05);
+                if (camera.position.distanceTo(desiredPosition) < 100) {
+                    tourState = 'waiting';
+                    const waitTime = focusedPlanet.userData.isSun ? 2000 : 5000;
+                    tourTimeout = setTimeout(advanceTour, waitTime);
+                }
+            } else if (tourState === 'waiting') {
+                camera.position.copy(desiredPosition);
+                controls.target.copy(targetPosition);
+            }
+        }
+    } else {
+        if (focusedPlanet) {
+            controls.target.lerp(focusedPlanet.getWorldPosition(new THREE.Vector3()), 0.1);
         } else {
             controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.1);
         }
@@ -402,17 +381,16 @@ function animate() {
     controls.update();
     renderer.render(scene, camera);
 
-    // Update labels
+    // Label Updates
     const canvasRect = canvas.getBoundingClientRect();
-    planets.forEach(planet => {
+    const allCelestialObjects = [sun, ...planets];
+    allCelestialObjects.forEach(celestialObject => {
         const vector = new THREE.Vector3();
-        planet.getWorldPosition(vector);
+        celestialObject.getWorldPosition(vector);
         vector.project(camera);
-
         const x = (vector.x * 0.5 + 0.5) * canvas.clientWidth;
         const y = (-vector.y * 0.5 + 0.5) * canvas.clientHeight;
-
-        const label = planetLabels[planet.userData.name];
+        const label = planetLabels[celestialObject.userData.name];
         if (label) {
             if (vector.z > 1) {
                 label.style.display = 'none';
@@ -425,16 +403,58 @@ function animate() {
     });
 }
 
-animate();
+// 9. INITIALIZATION
+function logSlider(position) {
+    const minp = 0;
+    const maxp = 1000;
+    const minv = MIN_LOG_TIME_SCALE;
+    const maxv = MAX_LOG_TIME_SCALE;
+    const scale = (maxv - minv) / (maxp - minp);
+    return Math.pow(10, minv + scale * (position - minp));
+}
 
-window.addEventListener('resize', () => {
-    // We need to get the new size of the canvas from the layout
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+function setTimeScale(value) {
+    TIME_SCALE = value;
+    // Update speeds for all objects
+    sun.userData.rotationSpeed = (2 * Math.PI / (sunData.rotationPeriodHours / 24)) * TIME_SCALE;
+    planets.forEach((planet, index) => {
+        const data = planetsData[index];
+        planet.userData.speed = (2 * Math.PI / data.orbitalPeriodDays) * TIME_SCALE;
+        planet.userData.rotationSpeed = (2 * Math.PI / (data.rotationPeriodHours / 24)) * TIME_SCALE;
+        if (data.moons) {
+            planet.children.forEach(child => {
+                const moonData = data.moons.find(m => m.name === child.userData.name);
+                if (moonData) {
+                    child.userData.speed = (2 * Math.PI / moonData.orbitalPeriodDays) * TIME_SCALE;
+                }
+            });
+        }
+    });
+}
 
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+function updateEarthMarker() {
+    const earthData = planetsData.find(p => p.name === 'Earth');
+    const targetTimeScale = earthData.orbitalPeriodDays / 60;
+    const minp = 0;
+    const maxp = 1000;
+    const minv = MIN_LOG_TIME_SCALE;
+    const maxv = MAX_LOG_TIME_SCALE;
+    const scale = (maxv - minv) / (maxp - minp);
+    const position = (Math.log10(targetTimeScale) - minv) / scale + minp;
+    if (position >= minp && position <= maxp) {
+        earthMarkerLabel.style.left = `${(position / maxp) * 100}%`;
+        earthMarkerLabel.style.display = 'block';
+    } else {
+        earthMarkerLabel.style.display = 'none';
+    }
+}
 
-    // Important: false as the third argument to prevent Three.js from setting the canvas style.
-    renderer.setSize(width, height, false);
+timeScaleSlider.addEventListener('input', (event) => {
+    const newTimeScale = logSlider(parseFloat(event.target.value));
+    setTimeScale(newTimeScale);
 });
+
+// Set initial state
+setTimeScale(logSlider(parseFloat(timeScaleSlider.value)));
+updateEarthMarker();
+animate(); // START THE RENDER LOOP

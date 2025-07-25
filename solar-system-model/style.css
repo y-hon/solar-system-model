@@ -52,8 +52,24 @@ body {
 }
 
 #controls input[type="range"] {
-    width: 90%;
+    width: 100%;
     margin: 5px 0;
+}
+
+.slider-container {
+    position: relative;
+    width: 90%;
+    margin-top: 10px;
+}
+
+#earth-marker-label {
+    position: absolute;
+    top: 20px; /* Position below the slider */
+    left: 50%; /* Default position, will be updated by JS */
+    transform: translateX(-50%);
+    font-size: 0.8em;
+    color: #888;
+    pointer-events: none; /* Make it non-interactive */
 }
 
 #planet-buttons {
