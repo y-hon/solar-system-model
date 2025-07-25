@@ -432,29 +432,31 @@ function setTimeScale(value) {
     });
 }
 
-function updateEarthMarker() {
-    const earthData = planetsData.find(p => p.name === 'Earth');
-    const targetTimeScale = earthData.orbitalPeriodDays / 60;
+function updateSliderPosition(timeScaleValue) {
+    // Inverse function of logSlider to find the slider position for a given time scale
     const minp = 0;
     const maxp = 1000;
     const minv = MIN_LOG_TIME_SCALE;
     const maxv = MAX_LOG_TIME_SCALE;
     const scale = (maxv - minv) / (maxp - minp);
-    const position = (Math.log10(targetTimeScale) - minv) / scale + minp;
-    if (position >= minp && position <= maxp) {
-        earthMarkerLabel.style.left = `${(position / maxp) * 100}%`;
-        earthMarkerLabel.style.display = 'block';
-    } else {
-        earthMarkerLabel.style.display = 'none';
-    }
+    const position = (Math.log10(timeScaleValue) - minv) / scale + minp;
+    timeScaleSlider.value = position;
 }
 
+// Set initial state
+setTimeScale(logSlider(parseFloat(timeScaleSlider.value)));
+
+// Event Listeners
 timeScaleSlider.addEventListener('input', (event) => {
     const newTimeScale = logSlider(parseFloat(event.target.value));
     setTimeScale(newTimeScale);
 });
 
-// Set initial state
-setTimeScale(logSlider(parseFloat(timeScaleSlider.value)));
-updateEarthMarker();
+earthMarkerLabel.addEventListener('click', () => {
+    const earthData = planetsData.find(p => p.name === 'Earth');
+    const targetTimeScale = earthData.orbitalPeriodDays / 3600;
+    setTimeScale(targetTimeScale);
+    updateSliderPosition(targetTimeScale);
+});
+
 animate(); // START THE RENDER LOOP

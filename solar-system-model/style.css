@@ -59,17 +59,29 @@ body {
 .slider-container {
     position: relative;
     width: 90%;
-    margin-top: 10px;
+    margin-top: 5px; /* Reduced margin */
+}
+
+.time-scale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    margin-top: 20px;
 }
 
 #earth-marker-label {
-    position: absolute;
-    top: 20px; /* Position below the slider */
-    left: 50%; /* Default position, will be updated by JS */
-    transform: translateX(-50%);
-    font-size: 0.8em;
-    color: #888;
-    pointer-events: none; /* Make it non-interactive */
+    font-size: 0.9em;
+    color: #aaa;
+    background-color: #333;
+    padding: 3px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#earth-marker-label:hover {
+    background-color: #555;
 }
 
 #planet-buttons {
