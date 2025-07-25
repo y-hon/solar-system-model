@@ -13,6 +13,7 @@ body {
     flex-grow: 1; /* Take up all available space */
     display: block; /* Remove default inline spacing */
     background-color: black;
+    min-width: 0; /* Fix flexbox resizing issue */
 }
 
 #title {
@@ -118,7 +119,7 @@ body {
     font-size: 1.5em;
     text-align: center;
     pointer-events: none;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, 30px); /* Adjust vertical position */
     z-index: 5;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;

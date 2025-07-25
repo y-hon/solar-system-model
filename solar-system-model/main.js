@@ -242,8 +242,11 @@ tourButton.addEventListener('click', () => {
     if (tourActive) {
         tourButton.textContent = 'ツアー停止';
         controls.enabled = false;
-        tourIndex = -1; // Reset to sun
-        advanceTour();
+        // Skip the sun and go directly to the first planet (Mercury)
+        tourIndex = 1; // Mercury is at index 1 of tourStops
+        const target = tourStops[tourIndex];
+        setFocus(target);
+        tourState = 'moving';
     } else {
         tourButton.textContent = 'ツアー開始';
         controls.enabled = true;
