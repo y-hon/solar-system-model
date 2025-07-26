@@ -140,6 +140,23 @@ body {
     font-size: 0.9em;
 }
 
+#info-panel button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    font-size: 1em;
+    background-color: #4CAF50; /* A green color to associate with Earth */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#info-panel button:hover {
+    background-color: #45a049;
+}
+
 .planet-label {
     position: absolute;
     color: white;

@@ -197,12 +197,25 @@ const earthMarkerLabel = document.getElementById('earth-marker-label');
 
 // UI Update Functions
 function updateInfoPanel(data) {
+    let htmlContent;
     if (data.isSun) {
-        infoPanel.innerHTML = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> 恒星</p><p><strong>直径 (地球比):</strong> ${data.radiusEarth.toLocaleString()}</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
+        htmlContent = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> 恒星</p><p><strong>直径 (地球比):</strong> ${data.radiusEarth.toLocaleString()}</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
     } else {
         const rotationDirection = data.rotationPeriodHours > 0 ? '順行' : '逆行';
         const rotationDays = Math.abs(data.rotationPeriodHours / 24).toFixed(2);
-        infoPanel.innerHTML = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> ${data.name === 'Pluto' ? '準惑星' : '惑星'}</p><p><strong>太陽からの平均距離:</strong> ${data.auDistance} AU</p><p><strong>公転周期:</strong> ${data.orbitalPeriodDays.toLocaleString()} 日</p><p><strong>自転周期:</strong> ${rotationDays} 日 (${rotationDirection})</p><p><strong>地軸の傾き:</strong> ${data.axialTilt}°</p><p><strong>半径 (地球比):</strong> ${data.radiusEarth}</p><p><strong>軌道離心率:</strong> ${data.eccentricity}</p><p><strong>軌道傾斜角:</strong> ${data.inclinationDegrees}°</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
+        htmlContent = `<h3>${data.name} (${data.japaneseName})</h3><p><strong>分類:</strong> ${data.name === 'Pluto' ? '準惑星' : '惑星'}</p><p><strong>太陽からの平均距離:</strong> ${data.auDistance} AU</p><p><strong>公転周期:</strong> ${data.orbitalPeriodDays.toLocaleString()} 日</p><p><strong>自転周期:</strong> ${rotationDays} 日 (${rotationDirection})</p><p><strong>地軸の傾き:</strong> ${data.axialTilt}°</p><p><strong>半径 (地球比):</strong> ${data.radiusEarth}</p><p><strong>軌道離心率:</strong> ${data.eccentricity}</p><p><strong>軌道傾斜角:</strong> ${data.inclinationDegrees}°</p><p style="margin-top: 15px;"><strong>概要:</strong> ${data.description}</p>`;
+    }
+
+    if (data.name === 'Earth') {
+        htmlContent += `<button id="googleEarthButton">Google Earthで詳しく見る</button>`;
+    }
+
+    infoPanel.innerHTML = htmlContent;
+
+    if (data.name === 'Earth') {
+        document.getElementById('googleEarthButton').addEventListener('click', () => {
+            window.open('https://earth.google.com/web/search/日本/@8.54729791,143.34085334,-2588.96230031a,22526662.60063648d,35y,0h,0t,0r/data=CiwiJgokCQ-jz3suyzxAEdcgkz8F1zvAGV2EDLczyBNAIcHKyXETr1rAQgIIAToDCgEwQgIIAEoNCP___________wEQAA', '_blank');
+        });
     }
 }
 
@@ -211,17 +224,30 @@ function clearInfoPanel() {
 }
 
 function setFocus(celestialObject) {
+    // Reset the label of the previously focused planet if it was Earth
+    if (focusedPlanet && focusedPlanet.userData.name === 'Earth') {
+        const oldEarthLabel = planetLabels['Earth'];
+        // Restore the original label text
+        oldEarthLabel.innerHTML = `${focusedPlanet.userData.name}<br>(${focusedPlanet.userData.japaneseName})`;
+    }
+
     if (focusedPlanet) {
         const oldLabel = planetLabels[focusedPlanet.userData.name];
         if (oldLabel && !oldLabel.classList.contains('pluto-label-always-visible')) {
             oldLabel.classList.remove('focused', 'visible');
         }
     }
+
     focusedPlanet = celestialObject;
+
     if (focusedPlanet) {
         const newLabel = planetLabels[focusedPlanet.userData.name];
         if (newLabel) {
             newLabel.classList.add('visible', 'focused');
+            // If the new focused planet is Earth, change its label to prompt for a second tap
+            if (focusedPlanet.userData.name === 'Earth') {
+                newLabel.innerHTML = `地球 (もう一度タップで拡大)`;
+            }
         }
         updateInfoPanel(focusedPlanet.userData);
     } else {
@@ -298,13 +324,24 @@ function handleMouseMove(event) {
 function handleClick(event) {
     const canvasBounds = canvas.getBoundingClientRect();
     if (event.clientX < canvasBounds.left || event.clientX > canvasBounds.right || event.clientY < canvasBounds.top || event.clientY > canvasBounds.bottom) return;
+
     mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
     mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects([sun, ...planets]);
+
     if (intersects.length > 0) {
-        setFocus(intersects[0].object);
+        const clickedObject = intersects[0].object;
+
+        // Check if the clicked object is Earth and is already focused
+        if (focusedPlanet === clickedObject && clickedObject.userData.name === 'Earth') {
+            window.open('https://earth.google.com/web/search/日本/@8.54729791,143.34085334,-2588.96230031a,22526662.60063648d,35y,0h,0t,0r/data=CiwiJgokCQ-jz3suyzxAEdcgkz8F1zvAGV2EDLczyBNAIcHKyXETr1rAQgIIAToDCgEwQgIIAEoNCP___________wEQAA', '_blank');
+        } else {
+            setFocus(clickedObject);
+        }
     } else {
+        // Clicked on empty space, unfocus
         setFocus(null);
     }
 }
