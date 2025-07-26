@@ -148,6 +148,16 @@ planetsData.forEach(data => {
     document.getElementById('labels').appendChild(labelDiv);
     planetLabels[data.name] = labelDiv;
 
+    // Add click listener to the label, specifically for Earth
+    if (data.name === 'Earth') {
+        labelDiv.addEventListener('click', () => {
+            // Only trigger if Earth is currently focused
+            if (focusedPlanet && focusedPlanet.userData.name === 'Earth') {
+                window.open('https://earth.google.com/web/search/日本/@8.54729791,143.34085334,-2588.96230031a,22526662.60063648d,35y,0h,0t,0r/data=CiwiJgokCQ-jz3suyzxAEdcgkz8F1zvAGV2EDLczyBNAIcHKyXETr1rAQgIIAToDCgEwQgIIAEoNCP___________wEQAA', '_blank');
+            }
+        });
+    }
+
     const orbitGeometry = new THREE.BufferGeometry();
     const orbitPoints = [];
     const segments = 256;
@@ -224,11 +234,11 @@ function clearInfoPanel() {
 }
 
 function setFocus(celestialObject) {
-    // Reset the label of the previously focused planet if it was Earth
+    // Reset the label and class of the previously focused planet if it was Earth
     if (focusedPlanet && focusedPlanet.userData.name === 'Earth') {
         const oldEarthLabel = planetLabels['Earth'];
-        // Restore the original label text
         oldEarthLabel.innerHTML = `${focusedPlanet.userData.name}<br>(${focusedPlanet.userData.japaneseName})`;
+        oldEarthLabel.classList.remove('earth-focused');
     }
 
     if (focusedPlanet) {
@@ -244,9 +254,10 @@ function setFocus(celestialObject) {
         const newLabel = planetLabels[focusedPlanet.userData.name];
         if (newLabel) {
             newLabel.classList.add('visible', 'focused');
-            // If the new focused planet is Earth, change its label to prompt for a second tap
+            // If the new focused planet is Earth, change its label and add a class
             if (focusedPlanet.userData.name === 'Earth') {
-                newLabel.innerHTML = `地球 (もう一度タップで拡大)`;
+                newLabel.innerHTML = `地球 (クリックで拡大)`;
+                newLabel.classList.add('earth-focused');
             }
         }
         updateInfoPanel(focusedPlanet.userData);
@@ -322,6 +333,11 @@ function handleMouseMove(event) {
 }
 
 function handleClick(event) {
+    // Check if the click was on a label. If so, do nothing here as it's handled by the label's own listener.
+    if (event.target.classList.contains('planet-label')) {
+        return;
+    }
+
     const canvasBounds = canvas.getBoundingClientRect();
     if (event.clientX < canvasBounds.left || event.clientX > canvasBounds.right || event.clientY < canvasBounds.top || event.clientY > canvasBounds.bottom) return;
 
@@ -333,13 +349,7 @@ function handleClick(event) {
 
     if (intersects.length > 0) {
         const clickedObject = intersects[0].object;
-
-        // Check if the clicked object is Earth and is already focused
-        if (focusedPlanet === clickedObject && clickedObject.userData.name === 'Earth') {
-            window.open('https://earth.google.com/web/search/日本/@8.54729791,143.34085334,-2588.96230031a,22526662.60063648d,35y,0h,0t,0r/data=CiwiJgokCQ-jz3suyzxAEdcgkz8F1zvAGV2EDLczyBNAIcHKyXETr1rAQgIIAToDCgEwQgIIAEoNCP___________wEQAA', '_blank');
-        } else {
-            setFocus(clickedObject);
-        }
+        setFocus(clickedObject);
     } else {
         // Clicked on empty space, unfocus
         setFocus(null);

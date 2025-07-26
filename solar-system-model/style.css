@@ -163,11 +163,16 @@ body {
     font-family: Arial, sans-serif;
     font-size: 1.5em;
     text-align: center;
-    pointer-events: none;
+    /* pointer-events: none; */ /* Allow clicks on labels */
     transform: translate(-50%, 30px); /* Adjust vertical position */
     z-index: 5;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
+}
+
+.planet-label.earth-focused {
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .planet-label.visible {
