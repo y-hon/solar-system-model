@@ -211,6 +211,8 @@ const tourButton = document.getElementById('tourButton');
 const timeScaleSlider = document.getElementById('timeScaleSlider');
 const earthMarkerLabel = document.getElementById('earth-marker-label');
 
+const autoZoomMessage = document.getElementById('auto-zoom-message');
+
 // UI Update Functions
 function updateInfoPanel(data) {
     let htmlContent;
@@ -239,12 +241,13 @@ function clearInfoPanel() {
     infoPanel.innerHTML = '';
 }
 
-function setFocus(celestialObject, initiatedByButton = false) {
-    // If the focus is changed, stop any ongoing tour
-    if (tourActive) {
+function setFocus(celestialObject, isUserAction = false) {
+    // If the focus is changed by a user action, stop any ongoing tour
+    if (tourActive && isUserAction) {
         tourActive = false;
         tourButton.textContent = 'ツアー開始';
         controls.enabled = true;
+        tourState = 'idle';
         clearTimeout(tourTimeout);
     }
 
@@ -263,7 +266,15 @@ function setFocus(celestialObject, initiatedByButton = false) {
     }
 
     focusedPlanet = celestialObject;
-    isAutoZooming = initiatedByButton;
+    isAutoZooming = isUserAction;
+
+    // Show/hide auto-zoom message
+    if (isAutoZooming) {
+        autoZoomMessage.textContent = `惑星へ移動中... (操作するとキャンセルします)`;
+        autoZoomMessage.classList.add('visible');
+    } else {
+        autoZoomMessage.classList.remove('visible');
+    }
 
     if (focusedPlanet) {
         const newLabel = planetLabels[focusedPlanet.userData.name];
@@ -284,7 +295,7 @@ function setFocus(celestialObject, initiatedByButton = false) {
 // Button Creation
 const sunButton = document.createElement('button');
 sunButton.textContent = '太陽';
-sunButton.addEventListener('click', () => setFocus(sun));
+sunButton.addEventListener('click', () => setFocus(sun, true));
 planetButtonsContainer.appendChild(sunButton);
 
 planetsData.forEach((data, index) => {
@@ -303,7 +314,7 @@ let tourState = 'idle';
 
 function advanceTour() {
     tourIndex = (tourIndex + 1) % tourStops.length;
-    setFocus(tourStops[tourIndex]);
+    setFocus(tourStops[tourIndex], false); // It's a tour action, not a user action
     tourState = 'moving';
 }
 
@@ -311,16 +322,17 @@ tourButton.addEventListener('click', () => {
     tourActive = !tourActive;
     if (tourActive) {
         tourButton.textContent = 'ツアー停止';
+        isAutoZooming = false;
         controls.enabled = false;
         tourIndex = 0;
-        setFocus(tourStops[tourIndex]);
+        setFocus(tourStops[tourIndex], false); // It's a tour action, not a user action
         tourState = 'moving';
     } else {
         tourButton.textContent = 'ツアー開始';
         controls.enabled = true;
         tourState = 'idle';
         clearTimeout(tourTimeout);
-        setFocus(null);
+        setFocus(null, true); // Stopping the tour is a user action
     }
 });
 
@@ -364,10 +376,10 @@ function handleClick(event) {
 
     if (intersects.length > 0) {
         const clickedObject = intersects[0].object;
-        setFocus(clickedObject);
+        setFocus(clickedObject, true); // It's a user action
     } else {
         // Clicked on empty space, unfocus
-        setFocus(null);
+        setFocus(null, true); // It's a user action
     }
 }
 
@@ -451,6 +463,7 @@ function animate() {
                 // Stop auto-zooming when close enough
                 if (camera.position.distanceTo(desiredPosition) < 10) {
                     isAutoZooming = false;
+                    autoZoomMessage.classList.remove('visible');
                 }
             }
         } else {
