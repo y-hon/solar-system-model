@@ -20,6 +20,11 @@ controls.maxDistance = 40000;
 camera.position.set(0, 2000, 12000);
 controls.update();
 
+// Stop auto-zooming when user interacts with controls
+controls.addEventListener('start', () => {
+    isAutoZooming = false;
+});
+
 // 3. LIGHTS
 const ambientLight = new THREE.AmbientLight(0x666666);
 scene.add(ambientLight);
@@ -195,6 +200,7 @@ scene.add(asteroidBelt);
 // State variables
 let focusedPlanet = null;
 let hoveredPlanet = null;
+let isAutoZooming = false;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -233,7 +239,15 @@ function clearInfoPanel() {
     infoPanel.innerHTML = '';
 }
 
-function setFocus(celestialObject) {
+function setFocus(celestialObject, initiatedByButton = false) {
+    // If the focus is changed, stop any ongoing tour
+    if (tourActive) {
+        tourActive = false;
+        tourButton.textContent = 'ツアー開始';
+        controls.enabled = true;
+        clearTimeout(tourTimeout);
+    }
+
     // Reset the label and class of the previously focused planet if it was Earth
     if (focusedPlanet && focusedPlanet.userData.name === 'Earth') {
         const oldEarthLabel = planetLabels['Earth'];
@@ -249,6 +263,7 @@ function setFocus(celestialObject) {
     }
 
     focusedPlanet = celestialObject;
+    isAutoZooming = initiatedByButton;
 
     if (focusedPlanet) {
         const newLabel = planetLabels[focusedPlanet.userData.name];
@@ -275,7 +290,7 @@ planetButtonsContainer.appendChild(sunButton);
 planetsData.forEach((data, index) => {
     const button = document.createElement('button');
     button.textContent = data.japaneseName;
-    button.addEventListener('click', () => setFocus(planets[index]));
+    button.addEventListener('click', () => setFocus(planets[index], true));
     planetButtonsContainer.appendChild(button);
 });
 
@@ -397,6 +412,7 @@ function animate() {
 
     // Camera Control
     if (tourActive) {
+        controls.enabled = false; // Disable controls during tour
         if (focusedPlanet) {
             const targetPosition = new THREE.Vector3();
             focusedPlanet.getWorldPosition(targetPosition);
@@ -413,13 +429,30 @@ function animate() {
                     tourTimeout = setTimeout(advanceTour, waitTime);
                 }
             } else if (tourState === 'waiting') {
+                // Hold position and target during wait time
                 camera.position.copy(desiredPosition);
                 controls.target.copy(targetPosition);
             }
         }
     } else {
+        controls.enabled = true; // Ensure controls are enabled when not on tour
         if (focusedPlanet) {
-            controls.target.lerp(focusedPlanet.getWorldPosition(new THREE.Vector3()), 0.1);
+            const targetPosition = new THREE.Vector3();
+            focusedPlanet.getWorldPosition(targetPosition);
+            controls.target.lerp(targetPosition, 0.1);
+
+            if (isAutoZooming) {
+                const distance = focusedPlanet.userData.scaledRadius * 4;
+                const offset = new THREE.Vector3(0, distance * 0.5, distance);
+                const desiredPosition = targetPosition.clone().add(offset);
+                
+                camera.position.lerp(desiredPosition, 0.08);
+
+                // Stop auto-zooming when close enough
+                if (camera.position.distanceTo(desiredPosition) < 10) {
+                    isAutoZooming = false;
+                }
+            }
         } else {
             controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.1);
         }
